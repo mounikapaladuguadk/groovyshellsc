@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Hello') {
+            steps {
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/mounikapaladuguadk/groovyshellsc.git']])
+        stage('ecr login'){
+            steps{
+                sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 590183701030.dkr.ecr.us-east-1.amazonaws.com'
+            }
+        }
+        stage('docker build'){
+            steps{
+                sh 'docker build -t groovyecr123 .'
+            }
+        }
+        stage('docker tag'){
+            steps{
+                sh 'docker tag groovyecr123:latest 590183701030.dkr.ecr.us-east-1.amazonaws.com/groovyecr123:latest'
+            }
+        }
+        stage('docker push'){
+            steps{
+                sh 'docker push 590183701030.dkr.ecr.us-east-1.amazonaws.com/groovyecr123:latest'
+            }
+        }
+        stage('deploy to eks'){
+            steps{
+                sh 'kubectl get nodes'
+                sh 'kubectl get all'
+                sh 'kubectl apply -f webapp.yml'
+                sh 'kubectl get pods'
+                sh 'kubectl get all'
+            }
+        }
+            }
+        }
+    }
+}
